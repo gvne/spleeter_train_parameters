@@ -10,7 +10,7 @@ from scipy.io.wavfile import write as wavwrite
 import stempeg # see https://github.com/faroit/stempeg
 
 # from musdb documentation
-# See https://zenodo.org/record/1117372?token=eyJhbGciOiJIUzUxMiIsImV4cCI6MTU4NDU3MjM5OSwiaWF0IjoxNTgxOTc0NDY4fQ.eyJkYXRhIjp7InJlY2lkIjoxMTE3MzcyfSwiaWQiOjYyODcsInJuZCI6ImM4Nzg3M2M5In0.7cfmQOuVd3GoeFo3lgEJpxSuzZBQnSTdx--2aDIHFoSAO63okqoSffb7hH-19IxcWTFYvCQlkgAQEjQHXClwbA#.Xkw0NBNKjVo
+# See https://zenodo.org/record/1117372#.XkxbIhNKjVo
 STEM_TYPES = {
     0: "mix",
     1: "drums",
@@ -21,7 +21,8 @@ STEM_TYPES = {
 EXPECTED_STEM_EXT = '.stem.mp4'
 
 PathsAndDuration = List[Dict[str, Tuple[Dict[str, str], float]]]
-def build_database(stem_database_path: str, export_path: str) -> Dict[str, PathsAndDuration]:
+def build_database(stem_database_path: str,
+                   export_path: str) -> Dict[str, PathsAndDuration]:
     """
     Read each files of a stem database and convert it into single wave file
     :param stem_database_path: the path to the musdb database. It should have
@@ -31,10 +32,18 @@ def build_database(stem_database_path: str, export_path: str) -> Dict[str, Paths
     """
     # list available files
     paths = {}
-    for subdir in [p for p in os.listdir(stem_database_path) if os.path.isdir(os.path.join(stem_database_path, p))]:
+    subdirs = [p
+        for p in os.listdir(stem_database_path)
+        if os.path.isdir(os.path.join(stem_database_path, p))
+    ]
+    for subdir in subdirs:
         subdir_path = os.path.join(stem_database_path, subdir)
         exported_files = {}
-        for file in [p for p in os.listdir(subdir_path) if os.path.isfile(os.path.join(subdir_path, p))]:
+        files = [p
+            for p in os.listdir(subdir_path)
+            if os.path.isfile(os.path.join(subdir_path, p))
+        ]
+        for file in files:
             logging.info("Processing" + file)
             exported = {}
             file_path = os.path.join(subdir_path, file)
@@ -49,15 +58,15 @@ def build_database(stem_database_path: str, export_path: str) -> Dict[str, Paths
             output_dirname = output_dirname[0:-len(EXPECTED_STEM_EXT)]
             os.makedirs(output_dirname, exist_ok=True)
 
+            # Read the file
             signals, rate = stempeg.read_stems(file_path)
             duration  = signals[0].shape[0] / rate
+
+            # split each stem file
             for signal_index in range(len(signals)):
                 output_path = os.path.join(
                     output_dirname, STEM_TYPES[signal_index] + ".wav")
                 exported[STEM_TYPES[signal_index]] = output_path
-                if os.path.exists(output_path):
-                    logging.info(output_path + " already exists. skipping !")
-                    continue
                 signal = signals[signal_index]
                 wavwrite(output_path, rate, signal)
                 logging.info(output_path + " properly exported")
@@ -74,16 +83,21 @@ def main():
         default="/Users/gvne/code/musdb18"
     )
     args = parser.parse_args()
+    # Build the database
     paths = build_database(args.dbpath, os.path.join(args.dbpath, "extracted"))
-    # build associated csv
+    # and the associated CSVs
     stem_types = [STEM_TYPES[k] for k in STEM_TYPES.keys()]
     for db_type in paths.keys():
         with open(db_type + '.csv', 'w') as csvfile:
             spamwriter = csv.writer(csvfile, delimiter=',')
-            spamwriter.writerow([st + "_path" for st in stem_types] + ["duration"])
+            spamwriter.writerow(
+                [st + "_path" for st in stem_types] + ["duration"])
             for file in paths[db_type].keys():
                 file_paths, duration = paths[db_type][file]
-                spamwriter.writerow([file_paths[stem_type] for stem_type in stem_types] + [str(duration)])
+                spamwriter.writerow(
+                    [file_paths[stem_type] for stem_type in stem_types] +
+                    [str(duration)]
+                )
 
 
 if __name__ == "__main__":
