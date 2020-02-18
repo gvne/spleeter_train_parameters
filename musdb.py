@@ -20,8 +20,8 @@ STEM_TYPES = {
 }
 EXPECTED_STEM_EXT = '.stem.mp4'
 
-Paths = List[Dict[str, Dict[str, str]]]
-def build_database(stem_database_path: str, export_path: str) -> Dict[str, Paths]:
+PathsAndDuration = List[Dict[str, Tuple[Dict[str, str], float]]]
+def build_database(stem_database_path: str, export_path: str) -> Dict[str, PathsAndDuration]:
     """
     Read each files of a stem database and convert it into single wave file
     :param stem_database_path: the path to the musdb database. It should have
@@ -50,6 +50,7 @@ def build_database(stem_database_path: str, export_path: str) -> Dict[str, Paths
             os.makedirs(output_dirname, exist_ok=True)
 
             signals, rate = stempeg.read_stems(file_path)
+            duration  = signals[0].shape[0] / rate
             for signal_index in range(len(signals)):
                 output_path = os.path.join(
                     output_dirname, STEM_TYPES[signal_index] + ".wav")
@@ -61,7 +62,7 @@ def build_database(stem_database_path: str, export_path: str) -> Dict[str, Paths
                 wavwrite(output_path, rate, signal)
                 logging.info(output_path + " properly exported")
 
-            exported_files[file] = exported
+            exported_files[file] = (exported, duration)
         paths[subdir] = exported_files
     return paths
 
@@ -79,9 +80,10 @@ def main():
     for db_type in paths.keys():
         with open(db_type + '.csv', 'w') as csvfile:
             spamwriter = csv.writer(csvfile, delimiter=',')
-            spamwriter.writerow(stem_types)
-            for file in paths[db_type]:
-                spamwriter.writerow([file[stem_type] for stem_type in stem_types])
+            spamwriter.writerow([st + "_path" for st in stem_types] + ["duration"])
+            for file in paths[db_type].keys():
+                file_paths, duration = paths[db_type][file]
+                spamwriter.writerow([file_paths[stem_type] for stem_type in stem_types] + [str(duration)])
 
 
 if __name__ == "__main__":
