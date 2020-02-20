@@ -18,7 +18,11 @@ STEM_TYPES = {
     3: "other",
     4: "vocals"
 }
+STEM_INDEXES = {}
+for k, v in STEM_TYPES.items():
+    STEM_INDEXES[v] = k
 EXPECTED_STEM_EXT = '.stem.mp4'
+
 
 PathsAndDuration = List[Dict[str, Tuple[Dict[str, str], float]]]
 def build_database(stem_database_path: str,
@@ -66,14 +70,26 @@ def build_database(stem_database_path: str,
             for signal_index in range(len(signals)):
                 output_path = os.path.join(
                     output_dirname, STEM_TYPES[signal_index] + ".wav")
-                exported[STEM_TYPES[signal_index]] = output_path
+                exported[STEM_TYPES[signal_index]] = \
+                    os.path.relpath(output_path, export_path)
                 signal = signals[signal_index]
                 wavwrite(output_path, rate, signal)
                 logging.info(output_path + " properly exported")
 
+            # Support 2stems learning
+            # Also export the accompaniment: every stem mixed but the vocals
+            accompaniment = \
+                signals[STEM_INDEXES["mix"]] - signals[STEM_INDEXES["vocals"]]
+            output_path = os.path.join(output_dirname, "accompaniment.wav")
+            exported["accompaniment"] = \
+                os.path.relpath(output_path, export_path)
+            wavwrite(output_path, rate, accompaniment)
+            logging.info(output_path + " properly exported")
+
             exported_files[file] = (exported, duration)
         paths[subdir] = exported_files
     return paths
+
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
