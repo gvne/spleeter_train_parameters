@@ -107,12 +107,14 @@ def main():
         with open(db_type + '.csv', 'w') as csvfile:
             spamwriter = csv.writer(csvfile, delimiter=',')
             spamwriter.writerow(
-                [st + "_path" for st in stem_types] + ["duration"])
+                [st + "_path" for st in stem_types] +
+                ["accompaniment_path", "duration"]
+            )
             for file in paths[db_type].keys():
                 file_paths, duration = paths[db_type][file]
                 spamwriter.writerow(
                     [file_paths[stem_type] for stem_type in stem_types] +
-                    [str(duration)]
+                    [file_paths["accompaniment"], str(duration)]
                 )
 
 
