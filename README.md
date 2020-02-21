@@ -13,9 +13,9 @@ will become the latency).
 
 ### Using `musDB18` in `Spleeter`
 
-the database is exported as stem files. However, to train spleeter we need
-single wav files and a CSV describing it. the `musdb.py` script can be used to
-format the database and export the desired CSVs
+the database is exported as stem files but a
+[this](https://github.com/sigsep/sigsep-mus-db) can be used to convert it to
+regular wav. We provide the `musdb.py` script to generate the associated csv.
 
 ## Credits
 

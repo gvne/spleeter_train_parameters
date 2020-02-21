@@ -1,14 +1,12 @@
 import os
 import json
 import argparse
+import describe_musdb
 from spleeter.commands.train import entrypoint as sptrain
 
 SPLEETER_CONFIGS_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "spleeter-configs")
-SPLEETER_MUSDB_TRAIN_CONF = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "train.csv")
-SPLEETER_MUSDB_VALIDATION_CONF = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "test.csv")
+TEMP_DIRECTORY = "/tmp/train_spleeter"
 
 # musdb only provides 4stems. Can't learn 5
 ANALYZED_TYPES = ["2stems"]#, "4stems"]
@@ -29,9 +27,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dbpath", help="The path to the extracted musdb database",
-        default="/Users/gvne/code/musdb18/extracted"
+        default="/Users/gvne/code/musdb18-converted"
     )
     args = parser.parse_args()
+
+    desc = describe_musdb.describe(args.dbpath)
+    os.makedirs(TEMP_DIRECTORY, exist_ok=True)
+    csvs = describe_musdb.export_description(desc, TEMP_DIRECTORY)
 
     for type in ANALYZED_TYPES:
         parameters_path = os.path.join(
@@ -41,10 +43,12 @@ def main():
 
         for T in ANALYZED_T:
             parameters['T'] = T
-            parameters['train_csv'] = SPLEETER_MUSDB_TRAIN_CONF
-            parameters['validation_csv'] = SPLEETER_MUSDB_VALIDATION_CONF
-            parameters['training_cache'] = "/tmp/spleeter/training_cache"
-            parameters['validation_cache'] = "/tmp/spleeter/validation_cache"
+            parameters['train_csv'] = csvs["train"]
+            parameters['validation_csv'] = csvs["test"]
+            parameters['training_cache'] = \
+                os.path.join(TEMP_DIRECTORY, "training_cache")
+            parameters['validation_cache'] = \
+                os.path.join(TEMP_DIRECTORY, "validation_cache")
 
         arguments = Bunch(
             audio_adapter=None,
