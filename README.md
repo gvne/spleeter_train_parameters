@@ -15,7 +15,55 @@ will become the latency).
 
 the database is exported as stem files but a
 [this](https://github.com/sigsep/sigsep-mus-db) can be used to convert it to
-regular wav. We provide the `musdb.py` script to generate the associated csv.
+regular wav. The `dbpath` input parameter of `train.py` is the path to the
+converted database.
+
+### Running on AWS Deep Learning AMI (Ubuntu18.04)
+
+Boot the AMI with a role that allows s3 access.
+Copy the database (I uploaded it to S3 first)
+```
+aws s3 cp s3://gvne-database/musdb18-converted musdb18-converted --recursive
+```
+
+activate the right environment and install dependencies
+```
+source activate tensorflow_py36
+conda install -y ffmpeg
+pip install ffmpeg-python ffprobe
+```
+Note: use ffmpeg-python instead of ffmpeg as [described](https://github.com/deezer/spleeter/issues/101)
+
+clone the right repositories:
+```
+git clone https://github.com/gvne/spleeter_train_parameters.git
+git clone https://github.com/deezer/spleeter.git
+ln -s spleeter/spleeter spleeter_train_parameters/spleeter
+cd spleeter_train_parameters
+```
+
+Start the learning
+```
+python train.py --dbpath ../musdb18-converted
+```
+
+### NOTE: Error when using tensorflow 1.15:
+```
+NotImplementedError: in converted code:
+    relative to /Users/gvne:
+
+    code/github/spleeter_time_frame_width/spleeter/dataset.py:134 compute_spectrogram  *
+        return dict(sample, **{
+    code/github/spleeter_time_frame_width/spleeter/audio/spectrogram.py:47 compute_spectrogram_tf  *
+        return np.abs(stft_tensor) ** spec_exponent
+    miniconda3/envs/sptest/lib/python3.6/site-packages/tensorflow_core/python/framework/ops.py:736 __array__
+        " array.".format(self.name))
+
+    NotImplementedError: Cannot convert a symbolic Tensor (transpose_1:0) to a numpy array.
+```
+
+To avoid that problem, you can use an older version of the AWS deep learning AMI
+which ships with tensorflow 1.14 (I used version 24: ami-004852354728c0e51).
 
 ## Credits
 
