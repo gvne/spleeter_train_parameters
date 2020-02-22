@@ -28,7 +28,7 @@ aws s3 cp s3://gvne-database/musdb18-converted musdb18-converted --recursive
 
 activate the right environment and install dependencies
 ```
-source activate tensorflow_py36
+source activate tensorflow_p36
 conda install -y ffmpeg
 pip install ffmpeg-python ffprobe
 ```
@@ -38,8 +38,8 @@ clone the right repositories:
 ```
 git clone https://github.com/gvne/spleeter_train_parameters.git
 git clone https://github.com/deezer/spleeter.git
-ln -s spleeter/spleeter spleeter_train_parameters/spleeter
 cd spleeter_train_parameters
+ln -s ../spleeter/spleeter spleeter
 ```
 
 Start the learning
