@@ -24,6 +24,7 @@ class Bunch:
 
 
 def main():
+    logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dbpath", help="The path to the extracted musdb database",
